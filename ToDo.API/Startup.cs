@@ -31,6 +31,16 @@ namespace ToDo.API
         {
             var connectionString = _configuration["connectionStrings:todoConnectionString"];
             //services.AddMvc(options => options.EnableEndpointRouting = false);
+            services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(
+                    builder =>
+                    {
+                        builder.AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader();
+                    });
+            });
             services.AddControllers();
             services.AddDbContext<ToDoContext>(options => options.UseNpgsql(connectionString));
             services.AddScoped<IToDoRepository, ToDoRepository>();
@@ -52,11 +62,12 @@ namespace ToDo.API
 
             app.UseStatusCodePages();
             app.UseRouting();
+            app.UseCors();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
-
+  
         }
     }
 }
