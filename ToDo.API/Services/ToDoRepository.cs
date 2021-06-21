@@ -21,6 +21,16 @@ namespace ToDo.API.Services
             return _context.ToDo.OrderBy(t => t.Timestamp).ToList();
         }
 
+        public IEnumerable<Entities.ToDo> GetToDoByTimestamp(string timestamp)
+        {
+            return _context.ToDo.Where(t => t.Timestamp == timestamp).ToList();
+        }
+
+        public IEnumerable<Entities.ToDo> GetToDoByCompleted(bool completed)
+        {
+            return _context.ToDo.Where(t => t.Completed == completed).ToList();
+        }
+        
         public Entities.ToDo GetToDoItem(int id)
         {
             return _context.ToDo.FirstOrDefault(t => t.Id == id);

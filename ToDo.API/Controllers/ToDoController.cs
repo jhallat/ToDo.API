@@ -54,6 +54,37 @@ namespace ToDo.API.Controllers
 
         }
 
+        [HttpGet("today")]
+        public IActionResult GetToDoItemsForToday()
+        {
+            var timestamp = DateTime.Now.ToString("yyyyMMdd");
+            try
+            {
+                var toDoEntities = _toDoRepository.GetToDoByTimestamp(timestamp);
+                return Ok(toDoEntities);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical($"Exception occured with getting to do item for timestamp {timestamp}.", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+        }
+
+        [HttpGet("incomplete")]
+        public IActionResult GetIncompleteToDoItems()
+        {
+            try
+            {
+                var toDoEntities = _toDoRepository.GetToDoByCompleted(false);
+                return Ok(toDoEntities);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical($"Exception occured with getting incomplete to do items.", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+        }
+        
         [HttpPost]
         public IActionResult CreateToDoItem(ToDoCreationDto createToDoItem)
         {
@@ -89,6 +120,30 @@ namespace ToDo.API.Controllers
             }
 
         }
+        
+        [HttpPut("{id}/timestamp")]
+        public IActionResult UpdateToDoTimestamp(int id, [FromBody] ToDoUpdateTimestampDto toDoTimestamp)
+        {
+            try
+            {
+                var todo = _toDoRepository.GetToDoItem(id);
+                if (todo == null)
+                {
+                    _logger.LogInformation($"To do item {id} not found.");
+                    return NotFound();
+                }
+                todo.Timestamp = toDoTimestamp.Timestamp;
+                _toDoRepository.Save();
+                return NoContent();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical($"Exception occured completing item {id}.", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+
+        }        
+        
 
         [HttpDelete("{id}")]
         public IActionResult DeleteToDoItem(int id)
