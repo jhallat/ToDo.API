@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
 namespace ToDo.API.Models
 {
@@ -7,6 +8,8 @@ namespace ToDo.API.Models
         [Required(ErrorMessage = "Description is required")]
         [MaxLength(255, ErrorMessage = "Description is limited to 255 maximum characters")]
         public string Description { get; set; }
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        public long TaskId { get; set; }
 
     }
 }

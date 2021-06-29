@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -20,5 +21,8 @@ namespace ToDo.API.Entities
         public string Description { get; set; }
         [Column("completed")]
         public bool Completed { get; set; }
+        [Column("task_id")]
+        [DefaultValue(0)]
+        public long TaskId { get; set; }
     }
 }

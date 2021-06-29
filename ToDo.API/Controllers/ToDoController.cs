@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Json;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -17,12 +19,17 @@ namespace ToDo.API.Controllers
         private readonly ILogger<ToDoController> _logger;
         private readonly IToDoRepository _toDoRepository;
         private readonly IMapper _mapper;
+        private readonly ITaskHandler _taskHandler;
 
-        public ToDoController(IToDoRepository toDoRepository, IMapper mapper, ILogger<ToDoController> logger)
+        public ToDoController(IToDoRepository toDoRepository, 
+                              IMapper mapper, 
+                              ITaskHandler taskHandler, 
+                              ILogger<ToDoController> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _toDoRepository = toDoRepository ?? throw new ArgumentException(nameof(toDoRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _taskHandler = taskHandler ?? throw new ArgumentNullException(nameof(taskHandler));
         }
         
         [HttpGet]
@@ -99,7 +106,7 @@ namespace ToDo.API.Controllers
         }
 
         [HttpPut("{id}/completed")]
-        public IActionResult UpdateToDoItem(int id, [FromBody] ToDoCompletedDto toDoCompleted)
+        public IActionResult CompleteToDoItem(int id, [FromBody] ToDoCompletedDto toDoCompleted)
         {
             try
             {
@@ -111,6 +118,14 @@ namespace ToDo.API.Controllers
                 }
                 todo.Completed = toDoCompleted.Completed;
                 _toDoRepository.Save();
+                if (toDoCompleted.TaskId > 0)
+                {
+                    _taskHandler.CompleteTask(new TaskCompletedDto
+                    {
+                        TaskId = toDoCompleted.TaskId,
+                        Completed = toDoCompleted.Completed
+                    });
+                }
                 return NoContent();
             }
             catch (Exception exception)
