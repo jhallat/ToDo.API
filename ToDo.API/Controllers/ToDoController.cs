@@ -100,11 +100,55 @@ namespace ToDo.API.Controllers
             todoItem.Timestamp = DateTime.Now.ToString("yyyyMMdd");
             todoItem.Completed = false;
             var createdToDoItem = _mapper.Map<Models.ToDoDto>(_toDoRepository.AddToDoItem(todoItem));
-            
+            if (createToDoItem.TaskId > 0)
+            {
+                _taskHandler.InProgressTask(new TaskInProgressDto
+                {
+                    TaskId = createToDoItem.TaskId,
+                    InProgress = true
+                });
+            }
             return CreatedAtRoute("GetToDoItem", new {id = createdToDoItem.Id}, createdToDoItem);
 
         }
 
+        [HttpPost("quantity-adjustment")]
+        public IActionResult AdjustToDoQuantity(ToDoUpdateQuantityDto updateQuantity)
+        {
+            try
+            {
+                var todo = _toDoRepository.GetToDoItem(updateQuantity.Id);
+                if (todo == null)
+                {
+                    _logger.LogInformation($"To do item {updateQuantity.Id} not found.");
+                    return NotFound();
+                }
+
+                int newQuantity = todo.Quantity - updateQuantity.Adjustment;
+                if (newQuantity < 0)
+                {
+                    newQuantity = 0;
+                    todo.Completed = true;
+                }
+                todo.Quantity = newQuantity;
+                _toDoRepository.Save();
+                if (todo.TaskId > 0 && todo.Completed)
+                {
+                    _taskHandler.CompleteTask(new TaskCompletedDto
+                    {
+                        TaskId = todo.TaskId,
+                        Completed = todo.Completed
+                    });
+                }
+                return Ok(todo);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical($"Exception occured completing item {updateQuantity.Id}.", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+        }
+        
         [HttpPut("{id}/completed")]
         public IActionResult CompleteToDoItem(int id, [FromBody] ToDoCompletedDto toDoCompleted)
         {
@@ -172,6 +216,13 @@ namespace ToDo.API.Controllers
 
             _toDoRepository.DeleteToDoItem(todo);
             _toDoRepository.Save();
+            {
+                _taskHandler.InProgressTask(new TaskInProgressDto
+                {
+                    TaskId = todo.TaskId,
+                    InProgress = false
+                });
+            }            
             return NoContent();
         }
     }

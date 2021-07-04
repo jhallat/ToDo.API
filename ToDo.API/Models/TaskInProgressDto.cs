@@ -1,14 +1,13 @@
-using System;
 using Newtonsoft.Json;
 
 namespace ToDo.API.Models
 {
-    public class TaskCompletedDto
+    public class TaskInProgressDto
     {
         [JsonProperty("taskId")]
         public long TaskId { get; set; }
         
-        [JsonProperty("completed")]
-        public bool Completed { get; set; }
+        [JsonProperty("inProgress")]
+        public bool InProgress { get; set; }
     }
 }

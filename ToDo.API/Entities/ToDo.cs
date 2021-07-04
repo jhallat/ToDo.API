@@ -24,5 +24,8 @@ namespace ToDo.API.Entities
         [Column("task_id")]
         [DefaultValue(0)]
         public long TaskId { get; set; }
+        [Column("quantity")]
+        [DefaultValue(1)]
+        public int Quantity { get; set; }
     }
 }

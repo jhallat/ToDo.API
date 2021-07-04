@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
@@ -10,6 +11,8 @@ namespace ToDo.API.Models
         public string Description { get; set; }
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         public long TaskId { get; set; }
-
+        [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue(1)]
+        public int Quantity { get; set; }
     }
 }

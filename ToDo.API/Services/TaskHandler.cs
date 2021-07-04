@@ -11,7 +11,8 @@ namespace ToDo.API.Services
         private static IConnection _connection;
         private static IModel _model;
 
-        private const string QueueName = "task.completed";
+        private const string CompletedQueueName = "task.completed";
+        private const string InProgressQueueName = "task.inprogress";
 
         public TaskHandler()
         {
@@ -22,9 +23,16 @@ namespace ToDo.API.Services
         {
             var json = JsonConvert.SerializeObject(taskCompleted);
             var body = Encoding.UTF8.GetBytes(json);
-            _model.BasicPublish("", QueueName, null, body);
+            _model.BasicPublish("", CompletedQueueName, null, body);
         }
 
+        public void InProgressTask(TaskInProgressDto taskInProgress)
+        {
+            var json = JsonConvert.SerializeObject(taskInProgress);
+            var body = Encoding.UTF8.GetBytes(json);
+            _model.BasicPublish("", InProgressQueueName, null, body);
+        }
+        
         private static void CreateQueue()
         {
             //TODO Externalize the configuration
@@ -32,7 +40,7 @@ namespace ToDo.API.Services
             _connection = _factory.CreateConnection();
             _model = _connection.CreateModel();
 
-            _model.QueueDeclare(QueueName, true, false, false, null);
+            _model.QueueDeclare(CompletedQueueName, true, false, false, null);
         }
         
     }
