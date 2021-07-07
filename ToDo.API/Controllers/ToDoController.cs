@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -201,8 +202,35 @@ namespace ToDo.API.Controllers
                 return StatusCode(500, "A problem occured while handling your request.");
             }
 
-        }        
-        
+        }
+
+        [HttpPost("{id}/snooze")]
+        public IActionResult SnoozeToDo(int id, [FromBody] ToDoSnoozeDto toDoSnooze)
+        {
+            try
+            {
+                var todo = _toDoRepository.GetToDoItem(id);
+                if (todo == null)
+                {
+                    _logger.LogInformation($"To do item {id} not found.");
+                    return NotFound();
+                }
+
+                var timestamp = DateTime.ParseExact(todo.Timestamp,
+                    "yyyyMMdd",
+                    new CultureInfo("en-US"));
+
+                timestamp = timestamp.AddDays(toDoSnooze.Days);
+                todo.Timestamp = timestamp.ToString("yyyyMMdd");
+                _toDoRepository.Save();
+                return NoContent();
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical($"Exception occured snoozing item {id}.", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+        }
 
         [HttpDelete("{id}")]
         public IActionResult DeleteToDoItem(int id)
