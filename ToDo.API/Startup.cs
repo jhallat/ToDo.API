@@ -3,21 +3,52 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using ToDo.API.Context;
 using ToDo.API.Services;
+
+
 
 namespace ToDo.API
 {
     public class Startup
     {
+        private static Task HealthResponseWriter(HttpContext context, HealthReport result)
+        {
+            context.Response.ContentType = "application/json";
+            var healthStatus = "UP";
+            if (result.Status == HealthStatus.Unhealthy)
+            {
+                healthStatus = "DOWN";
+            }
 
+            if (result.Status == HealthStatus.Degraded)
+            {
+                healthStatus = "DEGRADED";
+            }
+            var json = new JObject(
+                new JProperty("status", healthStatus),
+                new JProperty("checks", new JObject(result.Entries.Select(pair =>
+                    new JProperty(pair.Key, new JObject(
+                        new JProperty("status", pair.Value.Status.ToString()),
+                        new JProperty("description", pair.Value.Description),
+                        new JProperty("data", new JObject(pair.Value.Data.Select(
+                            p => new JProperty(p.Key, p.Value))))))))));
+
+            return context.Response.WriteAsync(
+                json.ToString(Formatting.Indented));
+        }
+        
         private readonly IConfiguration _configuration;
         
         public Startup(IConfiguration configuration)
@@ -46,6 +77,7 @@ namespace ToDo.API
             services.AddScoped<IToDoRepository, ToDoRepository>();
             services.AddScoped<ITaskHandler, TaskHandler>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+            services.AddHealthChecks();
 
         }
 
@@ -67,8 +99,13 @@ namespace ToDo.API
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapHealthChecks("/health", new HealthCheckOptions()
+                {
+                    ResponseWriter = HealthResponseWriter
+                });
             });
   
         }
     }
+
 }
