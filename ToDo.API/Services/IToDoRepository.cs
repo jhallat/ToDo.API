@@ -6,7 +6,7 @@ namespace ToDo.API.Services
     {
         IEnumerable<Entities.ToDo> GetToDo();
 
-        IEnumerable<Entities.ToDo> GetToDoByTimestamp(string timestamp);
+        IEnumerable<Entities.ToDo> GetToDoByActiveDate(string timestamp);
 
         public IEnumerable<Entities.ToDo> GetToDoByCompleted(bool completed);
         
@@ -17,5 +17,7 @@ namespace ToDo.API.Services
         bool Save();
 
         void DeleteToDoItem(Entities.ToDo toDo);
+
+        IEnumerable<Entities.ToDo> GetToDoByCompletionDateRange(string start, string end);
     }
 }

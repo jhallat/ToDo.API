@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
+
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -62,13 +60,15 @@ namespace ToDo.API.Controllers
 
         }
 
+ 
+        
         [HttpGet("today")]
         public IActionResult GetToDoItemsForToday()
         {
             var timestamp = DateTime.Now.ToString("yyyyMMdd");
             try
             {
-                var toDoEntities = _toDoRepository.GetToDoByTimestamp(timestamp);
+                var toDoEntities = _toDoRepository.GetToDoByActiveDate(timestamp);
                 return Ok(toDoEntities);
             }
             catch (Exception exception)
@@ -98,7 +98,8 @@ namespace ToDo.API.Controllers
         {
 
             var todoItem = _mapper.Map<Entities.ToDo>(createToDoItem);
-            todoItem.Timestamp = DateTime.Now.ToString("yyyyMMdd");
+            todoItem.ActiveDate = DateTime.Now.ToString("yyyyMMdd");
+            todoItem.CreatedDate = todoItem.ActiveDate;
             todoItem.Completed = false;
             var createdToDoItem = _mapper.Map<Models.ToDoDto>(_toDoRepository.AddToDoItem(todoItem));
             if (createToDoItem.TaskId > 0)
@@ -162,6 +163,7 @@ namespace ToDo.API.Controllers
                     return NotFound();
                 }
                 todo.Completed = toDoCompleted.Completed;
+                todo.CompletionDate = DateTime.Now.ToString("yyyyMMdd");
                 _toDoRepository.Save();
                 if (toDoCompleted.TaskId > 0)
                 {
@@ -181,7 +183,7 @@ namespace ToDo.API.Controllers
 
         }
         
-        [HttpPut("{id}/timestamp")]
+        [HttpPut("{id}/active-date")]
         public IActionResult UpdateToDoTimestamp(int id, [FromBody] ToDoUpdateTimestampDto toDoTimestamp)
         {
             try
@@ -192,7 +194,7 @@ namespace ToDo.API.Controllers
                     _logger.LogInformation($"To do item {id} not found.");
                     return NotFound();
                 }
-                todo.Timestamp = toDoTimestamp.Timestamp;
+                todo.ActiveDate = toDoTimestamp.ActiveDate;
                 _toDoRepository.Save();
                 return NoContent();
             }
@@ -216,12 +218,12 @@ namespace ToDo.API.Controllers
                     return NotFound();
                 }
 
-                var timestamp = DateTime.ParseExact(todo.Timestamp,
+                var timestamp = DateTime.ParseExact(todo.ActiveDate,
                     "yyyyMMdd",
                     new CultureInfo("en-US"));
 
                 timestamp = timestamp.AddDays(toDoSnooze.Days);
-                todo.Timestamp = timestamp.ToString("yyyyMMdd");
+                todo.ActiveDate = timestamp.ToString("yyyyMMdd");
                 _toDoRepository.Save();
                 return NoContent();
             }

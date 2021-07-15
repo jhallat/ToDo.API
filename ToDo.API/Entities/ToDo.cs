@@ -13,8 +13,14 @@ namespace ToDo.API.Entities
         public int Id { get; set; }
         [Required]
         [MaxLength(8)]
-        [Column("timestamp")]
-        public string Timestamp { get; set; }
+        [Column("active_date")]
+        public string ActiveDate { get; set; }
+        [MaxLength(8)]
+        [Column("created_date")]
+        public string CreatedDate { get; set; }
+        [MaxLength(8)]
+        [Column("completion_date")]
+        public string CompletionDate { get; set; }
         [Required]
         [MaxLength(255)]
         [Column("description")]

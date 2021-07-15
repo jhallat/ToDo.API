@@ -18,17 +18,24 @@ namespace ToDo.API.Services
         
         public IEnumerable<Entities.ToDo> GetToDo()
         {
-            return _context.ToDo.OrderBy(t => t.Timestamp).ToList();
+            return _context.ToDo.OrderBy(t => t.ActiveDate).ToList();
         }
 
-        public IEnumerable<Entities.ToDo> GetToDoByTimestamp(string timestamp)
+        public IEnumerable<Entities.ToDo> GetToDoByActiveDate(string timestamp)
         {
-            return _context.ToDo.Where(t => t.Timestamp == timestamp).ToList();
+            return _context.ToDo.Where(t => t.ActiveDate == timestamp).ToList();
         }
 
         public IEnumerable<Entities.ToDo> GetToDoByCompleted(bool completed)
         {
             return _context.ToDo.Where(t => t.Completed == completed).ToList();
+        }
+
+        public IEnumerable<Entities.ToDo> GetToDoByCompletionDateRange(string start, string end)
+        {
+            return _context.ToDo.Where(t => t.CompletionDate != null && 
+                           t.CompletionDate.CompareTo(start)  >= 0 && 
+                           t.CompletionDate.CompareTo(end) <= 0).ToList();
         }
         
         public Entities.ToDo GetToDoItem(int id)
