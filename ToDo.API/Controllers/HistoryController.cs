@@ -33,14 +33,17 @@ namespace ToDo.API.Controllers
             var completedEntities = _toDoRepository.GetToDoByCompletionDateRange(start, end)
                 .GroupBy(t => t.CompletionDate);
             List<ToDoCompletedSummary> summaries = new List<ToDoCompletedSummary>();
+            int index = 1;
             foreach (var completedEntity in completedEntities)
             {
                 var summary = new ToDoCompletedSummary()
                 {
+                    Index = index,
                     CompletionDate = completedEntity.Key,
                     Count = completedEntity.Count()
                 };
                 summaries.Add(summary);
+                index++;
             }
             return Ok(summaries);
         }
