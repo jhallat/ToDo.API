@@ -127,7 +127,7 @@ namespace ToDo.API.Controllers
                 }
 
                 int newQuantity = todo.Quantity - updateQuantity.Adjustment;
-                if (newQuantity < 0)
+                if (newQuantity <= 0)
                 {
                     newQuantity = 0;
                     todo.Completed = true;
