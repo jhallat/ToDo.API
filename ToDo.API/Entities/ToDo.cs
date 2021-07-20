@@ -33,5 +33,10 @@ namespace ToDo.API.Entities
         [Column("quantity")]
         [DefaultValue(1)]
         public int Quantity { get; set; }
+        [Column("goal_id")]
+        public long GoalId { get; set; }
+        [Column("goal_description")]
+        [MaxLength(255)]
+        public string GoalDescription { get; set; }
     }
 }

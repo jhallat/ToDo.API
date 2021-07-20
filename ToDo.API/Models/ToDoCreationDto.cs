@@ -14,5 +14,7 @@ namespace ToDo.API.Models
         [JsonProperty(DefaultValueHandling = DefaultValueHandling.Populate)]
         [DefaultValue(1)]
         public int Quantity { get; set; }
+        public long GoalId { get; set; }
+        public string GoalDescription { get; set; }
     }
 }
