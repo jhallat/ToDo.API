@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,7 +60,6 @@ namespace ToDo.API
         public void ConfigureServices(IServiceCollection services)
         {
             var connectionString = _configuration["connectionStrings:todoConnectionString"];
-            //services.AddMvc(options => options.EnableEndpointRouting = false);
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(
@@ -90,7 +88,7 @@ namespace ToDo.API
             }
             else
             {
-                app.UseExceptionHandler();
+                app.UseExceptionHandler("/Error");
             }
 
             app.UseStatusCodePages();

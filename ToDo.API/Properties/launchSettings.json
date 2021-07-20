@@ -14,13 +14,22 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "ToDo.API": {
+    "ToDo.API-DEV": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5001",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "ToDo.API-PROD": {
       "commandName": "Project",
       "dotnetRunMessages": "true",
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5000",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Production"
       }
     }
   }
