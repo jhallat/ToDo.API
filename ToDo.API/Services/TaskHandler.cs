@@ -1,4 +1,6 @@
+using System;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
 using ToDo.API.Models;
@@ -11,36 +13,47 @@ namespace ToDo.API.Services
         private static IConnection _connection;
         private static IModel _model;
 
-        private const string CompletedQueueName = "task.completed";
-        private const string InProgressQueueName = "task.inprogress";
-
-        public TaskHandler()
+        private readonly string _completedQueueName;
+        private readonly string _inProgressQueueName;
+        
+        public TaskHandler(IConfiguration configuration)
         {
-            CreateQueue();
+            _completedQueueName = configuration["Queues:taskCompleted"];
+            _inProgressQueueName = configuration["Queues:taskInProgress"];
+            var hostName = configuration["QueueConnection:hostName"];
+            var userName = configuration["QueueConnection:userName"];
+            var password = configuration["QueueConnection:password"];
+            
+            CreateQueues(hostName, userName, password, _completedQueueName, _inProgressQueueName);
         }
         
         public void CompleteTask(TaskCompletedDto taskCompleted)
         {
             var json = JsonConvert.SerializeObject(taskCompleted);
             var body = Encoding.UTF8.GetBytes(json);
-            _model.BasicPublish("", CompletedQueueName, null, body);
+            _model.BasicPublish("", _completedQueueName, null, body);
         }
 
         public void InProgressTask(TaskInProgressDto taskInProgress)
         {
             var json = JsonConvert.SerializeObject(taskInProgress);
             var body = Encoding.UTF8.GetBytes(json);
-            _model.BasicPublish("", InProgressQueueName, null, body);
+            _model.BasicPublish("", _inProgressQueueName, null, body);
         }
         
-        private static void CreateQueue()
+        private static void CreateQueues(string hostName, 
+                                         string userName,
+                                         string password,
+                                         string completedQueue,
+                                         string inprogressQueue)
         {
-            //TODO Externalize the configuration
-            _factory = new ConnectionFactory {HostName = "localhost", UserName = "guest", Password = "guest"};
+            //_factory = new ConnectionFactory {HostName = "localhost", UserName = "guest", Password = "guest"};
+            _factory = new ConnectionFactory {HostName = hostName, UserName = userName, Password = password};
             _connection = _factory.CreateConnection();
             _model = _connection.CreateModel();
 
-            _model.QueueDeclare(CompletedQueueName, true, false, false, null);
+            _model.QueueDeclare(completedQueue, true, false, false, null);
+            _model.QueueDeclare(inprogressQueue, true, false, false, null);
         }
         
     }
