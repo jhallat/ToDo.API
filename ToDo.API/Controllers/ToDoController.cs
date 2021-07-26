@@ -60,12 +60,26 @@ namespace ToDo.API.Controllers
 
         }
 
- 
+        [HttpGet("active/{date}")]
+        public IActionResult GetToDoItemsForActiveDate(string date)
+        {
+            try
+            {
+                var toDoEntities = _toDoRepository.GetToDoByActiveDate(date);
+                return Ok(toDoEntities);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogCritical($"Exception occured with getting to do item for active date {date}.", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+        }        
         
         [HttpGet("today")]
         public IActionResult GetToDoItemsForToday()
         {
-            var timestamp = DateTime.Now.ToString("yyyyMMdd");
+            var easternZone = TimeZoneInfo.FindSystemTimeZoneById("EST");
+            var timestamp = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone).ToString("yyyyMMdd");
             try
             {
                 var toDoEntities = _toDoRepository.GetToDoByActiveDate(timestamp);
