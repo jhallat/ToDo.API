@@ -31,6 +31,16 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production"
       }
+    },
+    "ToDo.API-PROD-Local": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5000",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "ProductionLocal"
+      }
     }
   }
 }
+

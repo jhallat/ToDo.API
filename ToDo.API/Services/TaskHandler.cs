@@ -48,7 +48,7 @@ namespace ToDo.API.Services
                                          string inprogressQueue)
         {
             //_factory = new ConnectionFactory {HostName = "localhost", UserName = "guest", Password = "guest"};
-            _factory = new ConnectionFactory {HostName = hostName, UserName = userName, Password = password};
+            _factory = new ConnectionFactory {HostName = hostName, UserName = userName, Password = password, VirtualHost = "/"};
             _connection = _factory.CreateConnection();
             _model = _connection.CreateModel();
 

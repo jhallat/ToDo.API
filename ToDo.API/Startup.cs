@@ -59,7 +59,12 @@ namespace ToDo.API
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionString = _configuration["connectionStrings:todoConnectionString"];
+            var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+            Console.WriteLine("DB_CONNECTION = " + connectionString);
+            if (connectionString == null || connectionString.Trim().Length == 0)
+            {
+                connectionString = _configuration["connectionStrings:todoConnectionString"];    
+            }
             services.AddCors(options =>
             {
                 options.AddDefaultPolicy(
