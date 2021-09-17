@@ -14,33 +14,41 @@ namespace ToDo.API.Controllers
     {
         
         private readonly ILogger<ToDoController> _logger;
-        private readonly IToDoRepository _toDoRepository;
+        private readonly IChecklistAuditRepository _auditRepository;
         private readonly ITaskHandler _taskHandler;
 
-        public HistoryController(IToDoRepository toDoRepository, 
+        public HistoryController(IChecklistAuditRepository auditRepository, 
             ITaskHandler taskHandler, 
             ILogger<ToDoController> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _toDoRepository = toDoRepository ?? throw new ArgumentException(nameof(toDoRepository));
+            _auditRepository = auditRepository ?? throw new ArgumentException(nameof(auditRepository));
             _taskHandler = taskHandler ?? throw new ArgumentNullException(nameof(taskHandler));
         }
         
         [HttpGet("completed/summary")]
-        public IActionResult GetCompletionHistory([FromQuery(Name="start")] string start,
-                                                  [FromQuery(Name="end")] string end)
+        public IActionResult GetCompletionHistory([FromQuery(Name="start")] DateTime start,
+                                                  [FromQuery(Name="end")] DateTime end)
         {
-            var completedEntities = _toDoRepository.GetToDoByCompletionDateRange(start, end)
-                .GroupBy(t => t.CompletionDate);
-            List<ToDoCompletedSummary> summaries = new List<ToDoCompletedSummary>();
-            int index = 1;
+            var completedEntities = _auditRepository.GetAuditByDateRangeAndProperty(start, end, "Completed")
+                .GroupBy(t => t.AuditDate.ToString("yyyyMMdd"))
+                .Select(item => new
+                {
+                    AuditDate = item.Key,
+                    Completed = item.Sum(a => a.NewValue.Equals("true") ? 1 : -1)
+                })
+                .OrderBy(result => result.AuditDate)
+                .Select(result => result);
+                
+            var summaries = new List<ToDoCompletedSummary>();
+            var index = 1;
             foreach (var completedEntity in completedEntities)
             {
                 var summary = new ToDoCompletedSummary()
                 {
                     Index = index,
-                    CompletionDate = completedEntity.Key,
-                    Count = completedEntity.Count()
+                    CompletionDate = completedEntity.AuditDate,
+                    Count = completedEntity.Completed
                 };
                 summaries.Add(summary);
                 index++;

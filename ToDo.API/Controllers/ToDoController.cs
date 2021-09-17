@@ -5,6 +5,7 @@ using System.Globalization;
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using ToDo.API.Entities;
 using ToDo.API.Models;
 using ToDo.API.Services;
 
@@ -17,10 +18,12 @@ namespace ToDo.API.Controllers
 
         private readonly ILogger<ToDoController> _logger;
         private readonly IToDoRepository _toDoRepository;
+        private readonly IChecklistAuditRepository _auditRepository;
         private readonly IMapper _mapper;
         private readonly ITaskHandler _taskHandler;
 
-        public ToDoController(IToDoRepository toDoRepository, 
+        public ToDoController(IToDoRepository toDoRepository,
+                              IChecklistAuditRepository auditRepository,
                               IMapper mapper, 
                               ITaskHandler taskHandler, 
                               ILogger<ToDoController> logger)
@@ -29,6 +32,7 @@ namespace ToDo.API.Controllers
             _toDoRepository = toDoRepository ?? throw new ArgumentException(nameof(toDoRepository));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _taskHandler = taskHandler ?? throw new ArgumentNullException(nameof(taskHandler));
+            _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         }
         
         [HttpGet]
@@ -124,6 +128,19 @@ namespace ToDo.API.Controllers
                     InProgress = true
                 });
             }
+
+            var checkListAudit = new CheckListAudit
+            {
+                AuditAction = AuditActions.ADD,
+                AuditDate = DateTime.Now,
+                ChecklistId = createdToDoItem.Id,
+                Id = 0,
+                NewValue = $"{createdToDoItem.Id}:{createdToDoItem.Description}",
+                OriginalValue = "",
+                Property = ""
+
+            };
+            _auditRepository.AddCheckListAudit(checkListAudit);
             return CreatedAtRoute("GetToDoItem", new {id = createdToDoItem.Id}, createdToDoItem);
 
         }
@@ -145,9 +162,33 @@ namespace ToDo.API.Controllers
                 {
                     newQuantity = 0;
                     todo.Completed = true;
+                    _auditRepository.AddCheckListAudit(new CheckListAudit
+                    {
+                        AuditAction = AuditActions.UPDATE,
+                        AuditDate = DateTime.Now,
+                        ChecklistId = todo.Id,
+                        Id = 0,
+                        NewValue = "true",
+                        OriginalValue = "false",
+                        Property = "Completed"
+
+                    });                    
                 }
+
+                var oldQuantity = todo.Quantity;
                 todo.Quantity = newQuantity;
                 _toDoRepository.Save();
+                _auditRepository.AddCheckListAudit(new CheckListAudit
+                {
+                    AuditAction = AuditActions.UPDATE,
+                    AuditDate = DateTime.Now,
+                    ChecklistId = todo.Id,
+                    Id = 0,
+                    NewValue = $"{newQuantity}",
+                    OriginalValue = $"{oldQuantity}",
+                    Property = "Quantity"
+
+                });   
                 if (todo.TaskId > 0 && todo.Completed)
                 {
                     _taskHandler.CompleteTask(new TaskCompletedDto
@@ -176,9 +217,22 @@ namespace ToDo.API.Controllers
                     _logger.LogInformation($"To do item {id} not found.");
                     return NotFound();
                 }
+
+                var oldValue = todo.Completed;
                 todo.Completed = toDoCompleted.Completed;
                 todo.CompletionDate = DateTime.Now.ToString("yyyyMMdd");
                 _toDoRepository.Save();
+                _auditRepository.AddCheckListAudit(new CheckListAudit
+                {
+                    AuditAction = AuditActions.UPDATE,
+                    AuditDate = DateTime.Now,
+                    ChecklistId = todo.Id,
+                    Id = 0,
+                    NewValue = $"{toDoCompleted.Completed}",
+                    OriginalValue = $"{oldValue}",
+                    Property = "Completed"
+
+                });  
                 if (toDoCompleted.TaskId > 0)
                 {
                     _taskHandler.CompleteTask(new TaskCompletedDto
@@ -208,8 +262,21 @@ namespace ToDo.API.Controllers
                     _logger.LogInformation($"To do item {id} not found.");
                     return NotFound();
                 }
+
+                var oldValue = todo.ActiveDate;
                 todo.ActiveDate = toDoTimestamp.ActiveDate;
                 _toDoRepository.Save();
+                _auditRepository.AddCheckListAudit(new CheckListAudit
+                {
+                    AuditAction = AuditActions.UPDATE,
+                    AuditDate = DateTime.Now,
+                    ChecklistId = todo.Id,
+                    Id = 0,
+                    NewValue = toDoTimestamp.ActiveDate,
+                    OriginalValue = oldValue,
+                    Property = "ActiveDate"
+
+                });  
                 return NoContent();
             }
             catch (Exception exception)
@@ -237,8 +304,20 @@ namespace ToDo.API.Controllers
                     new CultureInfo("en-US"));
 
                 timestamp = timestamp.AddDays(toDoSnooze.Days);
+                var oldValue = todo.ActiveDate;
                 todo.ActiveDate = timestamp.ToString("yyyyMMdd");
                 _toDoRepository.Save();
+                _auditRepository.AddCheckListAudit(new CheckListAudit
+                {
+                    AuditAction = AuditActions.UPDATE,
+                    AuditDate = DateTime.Now,
+                    ChecklistId = todo.Id,
+                    Id = 0,
+                    NewValue = todo.ActiveDate,
+                    OriginalValue = oldValue,
+                    Property = "ActiveDate"
+
+                });  
                 return NoContent();
             }
             catch (Exception exception)
@@ -260,6 +339,17 @@ namespace ToDo.API.Controllers
 
             _toDoRepository.DeleteToDoItem(todo);
             _toDoRepository.Save();
+            _auditRepository.AddCheckListAudit(new CheckListAudit
+            {
+                AuditAction = AuditActions.DELETE,
+                AuditDate = DateTime.Now,
+                ChecklistId = todo.Id,
+                Id = 0,
+                NewValue = "",
+                OriginalValue = $"{todo.Id}:{todo.Description}",
+                Property = "ActiveDate"
+
+            });  
             {
                 _taskHandler.InProgressTask(new TaskInProgressDto
                 {

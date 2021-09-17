@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
-using NLog.Targets.Wrappers;
 using ToDo.API.Context;
 
 namespace ToDo.API.Services
