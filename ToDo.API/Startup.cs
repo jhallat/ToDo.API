@@ -60,7 +60,6 @@ namespace ToDo.API
         public void ConfigureServices(IServiceCollection services)
         {
             var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            Console.WriteLine("DB_CONNECTION = " + connectionString);
             if (connectionString == null || connectionString.Trim().Length == 0)
             {
                 connectionString = _configuration["connectionStrings:todoConnectionString"];    
