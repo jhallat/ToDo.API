@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metedata:
+  name: checklist-service
+  labels:
+    app: rest-service
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: rest-service
+    template:
+      metadata:
+        labels: rest-service
+      spec:
+        terminationGracePeriodSeconds: 1
+        containers:
+          - name: checklist-service-ctr
+            image: jhallat/checklist-service:0.0.1
+            imagePullPolicy: Always
+            ports:
+              -containerPort: 3000
+            env:
+              - name: DB_CONNECTION
+                valueFrom:
+                  secretKeyRef:
+                    name: checklist-db-conn
+                    key: checklistConnectionString
+        imagePullSecrets:
+          - name: regcred         
