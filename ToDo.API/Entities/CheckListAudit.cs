@@ -31,7 +31,7 @@ namespace ToDo.API.Entities
         public string AuditAction { get; set; }
         [Column("property")]
         [MaxLength(50)]
-        public string Property;
+        public string Property { get; set; }
         [Column("original_value")]
         [MaxLength(255)]
         public String OriginalValue { get; set; }

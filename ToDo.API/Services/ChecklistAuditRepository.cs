@@ -8,9 +8,9 @@ namespace ToDo.API.Services
 {
     public class ChecklistAuditRepository : IChecklistAuditRepository
     {
-        private readonly CheckListAuditContext _context;
+        private readonly ToDoContext _context;
 
-        public ChecklistAuditRepository(CheckListAuditContext context)
+        public ChecklistAuditRepository(ToDoContext context)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
         }        
@@ -24,8 +24,8 @@ namespace ToDo.API.Services
 
         public IEnumerable<CheckListAudit> GetAuditByDateRangeAndProperty(DateTime start, DateTime end, string property)
         {
-            return _context.CheckListAudits.Where(item => item.AuditDate.CompareTo(start) >= 0
-                   && item.AuditDate.CompareTo(end) <= 0
+            return _context.CheckListAudits.Where(item => item.AuditDate.CompareTo(start) > 0
+                   && item.AuditDate.CompareTo(end) < 0
                    && item.Property.Equals(property)).ToList();
         }
     }

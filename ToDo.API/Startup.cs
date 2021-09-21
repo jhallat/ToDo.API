@@ -78,6 +78,7 @@ namespace ToDo.API
             services.AddControllers();
             services.AddDbContext<ToDoContext>(options => options.UseNpgsql(connectionString));
             services.AddScoped<IToDoRepository, ToDoRepository>();
+            services.AddScoped<IChecklistAuditRepository, ChecklistAuditRepository>();
             services.AddScoped<ITaskHandler, TaskHandler>();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             services.AddHealthChecks();

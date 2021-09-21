@@ -30,12 +30,15 @@ namespace ToDo.API.Controllers
         public IActionResult GetCompletionHistory([FromQuery(Name="start")] DateTime start,
                                                   [FromQuery(Name="end")] DateTime end)
         {
-            var completedEntities = _auditRepository.GetAuditByDateRangeAndProperty(start, end, "Completed")
+            var completedEntities = _auditRepository.GetAuditByDateRangeAndProperty(
+                    start.Subtract(TimeSpan.FromDays(1)), 
+                    end.Add(TimeSpan.FromDays(1)),
+                    "Completed")
                 .GroupBy(t => t.AuditDate.ToString("yyyyMMdd"))
                 .Select(item => new
                 {
                     AuditDate = item.Key,
-                    Completed = item.Sum(a => a.NewValue.Equals("true") ? 1 : -1)
+                    Completed = item.Sum(a => a.NewValue.ToLower().Equals("true") ? 1 : -1)
                 })
                 .OrderBy(result => result.AuditDate)
                 .Select(result => result);

@@ -16,6 +16,7 @@ RUN dotnet publish "ToDo.API.csproj" -c Release -o /app/publish
 FROM base AS final
 ENV ASPNETCORE_URLS=http://*:5000
 ENV ASPNETCORE_ENVIRONMENT=Production
+ENV TZ America/New_York
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "ToDo.API.dll"]
