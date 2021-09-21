@@ -16,13 +16,14 @@ namespace ToDo.API.Services
         private readonly string _completedQueueName;
         private readonly string _inProgressQueueName;
         
-        public TaskHandler(IConfiguration configuration)
+        public TaskHandler(String completedQueueName,
+                           String inProgressQueueName,
+                           String hostName,
+                           String userName,
+                           String password)
         {
-            _completedQueueName = configuration["Queues:taskCompleted"];
-            _inProgressQueueName = configuration["Queues:taskInProgress"];
-            var hostName = configuration["QueueConnection:hostName"];
-            var userName = configuration["QueueConnection:userName"];
-            var password = configuration["QueueConnection:password"];
+            _completedQueueName = completedQueueName;
+            _inProgressQueueName = inProgressQueueName;
             
             CreateQueues(hostName, userName, password, _completedQueueName, _inProgressQueueName);
         }
