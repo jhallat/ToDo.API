@@ -17,6 +17,7 @@ namespace ToDo.API
             var logger = NLogBuilder
                 .ConfigureNLog("nlog.config")
                 .GetCurrentClassLogger();
+            logger.Info("Starting checklist-service");
             try
             {
                 CreateHostBuilder(args).Build().Run();
