@@ -38,8 +38,17 @@ namespace ToDo.API.Controllers
         [HttpGet]
         public IActionResult GetToDo()
         {
-            var toDoEntities = _toDoRepository.GetToDo();
-            return Ok(_mapper.Map<IEnumerable<ToDoDto>>(toDoEntities));
+            try
+            {
+                var toDoEntities = _toDoRepository.GetToDo();
+                return Ok(_mapper.Map<IEnumerable<ToDoDto>>(toDoEntities));
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError("Exception occured while getting checklist items", exception);
+                return StatusCode(500, "A problem occured while handling your request.");
+            }
+
         }
 
         [HttpGet("{id}", Name="GetToDoItem")]

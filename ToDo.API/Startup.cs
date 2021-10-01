@@ -22,6 +22,8 @@ namespace ToDo.API
 {
     public class Startup
     {
+
+       
         private static Task HealthResponseWriter(HttpContext context, HealthReport result)
         {
             context.Response.ContentType = "application/json";
@@ -59,50 +61,54 @@ namespace ToDo.API
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-            if (connectionString == null || connectionString.Trim().Length == 0)
-            {
-                connectionString = _configuration["connectionStrings:todoConnectionString"];    
-            }
-            services.AddCors(options =>
-            {
-                options.AddDefaultPolicy(
-                    builder =>
-                    {
-                        builder.AllowAnyOrigin()
-                            .AllowAnyMethod()
-                            .AllowAnyHeader();
-                    });
-            });
-            var completedQueueName = _configuration["Queues:taskCompleted"];
-            var inProgressQueueName = _configuration["Queues:taskInProgress"];
-            var hostName = Environment.GetEnvironmentVariable("QUEUE_HOST");
-            if (hostName == null || hostName.Trim().Length == 0)
-            {
-                hostName = _configuration["QueueConnection:hostName"];    
-            }
-            var userName = Environment.GetEnvironmentVariable("QUEUE_USER");
-            if (userName == null || userName.Trim().Length == 0)
-            {
-                userName = _configuration["QueueConnection:userName"];
-            }
-            var password = Environment.GetEnvironmentVariable("QUEUE_PASSWORD");
-            if (password == null || password.Trim().Length == 0)
-            {
-                password = _configuration["QueueConnection:password"];
-            }
-            services.AddControllers();
-            services.AddDbContext<ToDoContext>(options => options.UseNpgsql(connectionString));
-            services.AddScoped<IToDoRepository, ToDoRepository>();
-            services.AddScoped<IChecklistAuditRepository, ChecklistAuditRepository>();
-            services.AddSingleton<ITaskHandler>(taskHandler => new TaskHandler(
-                completedQueueName,
-                inProgressQueueName,
-                hostName, 
-                userName, 
-                password));
-            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-            services.AddHealthChecks();
+                var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
+                if (connectionString == null || connectionString.Trim().Length == 0)
+                {
+                    connectionString = _configuration["connectionStrings:todoConnectionString"];
+                }
+
+                services.AddCors(options =>
+                {
+                    options.AddDefaultPolicy(
+                        builder =>
+                        {
+                            builder.AllowAnyOrigin()
+                                .AllowAnyMethod()
+                                .AllowAnyHeader();
+                        });
+                });
+                var completedQueueName = _configuration["Queues:taskCompleted"];
+                var inProgressQueueName = _configuration["Queues:taskInProgress"];
+                var hostName = Environment.GetEnvironmentVariable("QUEUE_HOST");
+                if (hostName == null || hostName.Trim().Length == 0)
+                {
+                    hostName = _configuration["QueueConnection:hostName"];
+                }
+
+                var userName = Environment.GetEnvironmentVariable("QUEUE_USER");
+                if (userName == null || userName.Trim().Length == 0)
+                {
+                    userName = _configuration["QueueConnection:userName"];
+                }
+
+                var password = Environment.GetEnvironmentVariable("QUEUE_PASSWORD");
+                if (password == null || password.Trim().Length == 0)
+                {
+                    password = _configuration["QueueConnection:password"];
+                }
+
+                services.AddControllers();
+                services.AddDbContext<ToDoContext>(options => options.UseNpgsql(connectionString));
+                services.AddScoped<IToDoRepository, ToDoRepository>();
+                services.AddScoped<IChecklistAuditRepository, ChecklistAuditRepository>();
+                services.AddSingleton<ITaskHandler>(taskHandler => new TaskHandler(
+                    completedQueueName,
+                    inProgressQueueName,
+                    hostName,
+                    userName,
+                    password));
+                services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+                services.AddHealthChecks();
 
         }
 
