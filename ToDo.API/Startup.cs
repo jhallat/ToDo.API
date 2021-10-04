@@ -64,6 +64,7 @@ namespace ToDo.API
         public void ConfigureServices(IServiceCollection services)
         {
                var connectionString = _configuration["connectionStrings:todoConnectionString"];
+               Console.Out.WriteLine(connectionString);
                 services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(
@@ -76,23 +77,9 @@ namespace ToDo.API
                 });
                 var completedQueueName = _configuration["Queues:taskCompleted"];
                 var inProgressQueueName = _configuration["Queues:taskInProgress"];
-                var hostName = Environment.GetEnvironmentVariable("QUEUE_HOST");
-                if (hostName == null || hostName.Trim().Length == 0)
-                {
-                    hostName = _configuration["QueueConnection:hostName"];
-                }
-
-                var userName = Environment.GetEnvironmentVariable("QUEUE_USER");
-                if (userName == null || userName.Trim().Length == 0)
-                {
-                    userName = _configuration["QueueConnection:userName"];
-                }
-
-                var password = Environment.GetEnvironmentVariable("QUEUE_PASSWORD");
-                if (password == null || password.Trim().Length == 0)
-                {
-                    password = _configuration["QueueConnection:password"];
-                }
+                var hostName = _configuration["QueueConnection:hostName"];
+                var userName = _configuration["QueueConnection:userName"];
+                var password = _configuration["QueueConnection:password"];
                 services.AddControllers();
                 services.AddDbContext<ToDoContext>(options => options.UseNpgsql(connectionString));
                 services.AddScoped<IToDoRepository, ToDoRepository>();
