@@ -64,7 +64,6 @@ namespace ToDo.API
         public void ConfigureServices(IServiceCollection services)
         {
                var connectionString = _configuration["connectionStrings:todoConnectionString"];
-
                 services.AddCors(options =>
                 {
                     options.AddDefaultPolicy(
