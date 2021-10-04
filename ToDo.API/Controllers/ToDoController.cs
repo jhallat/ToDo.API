@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -15,7 +14,6 @@ namespace ToDo.API.Controllers
     [Route("api/todo")]
     public class ToDoController : ControllerBase
     {
-
         private readonly ILogger<ToDoController> _logger;
         private readonly IToDoRepository _toDoRepository;
         private readonly IChecklistAuditRepository _auditRepository;
@@ -23,10 +21,10 @@ namespace ToDo.API.Controllers
         private readonly ITaskHandler _taskHandler;
 
         public ToDoController(IToDoRepository toDoRepository,
-                              IChecklistAuditRepository auditRepository,
-                              IMapper mapper, 
-                              ITaskHandler taskHandler, 
-                              ILogger<ToDoController> logger)
+            IChecklistAuditRepository auditRepository,
+            IMapper mapper,
+            ITaskHandler taskHandler,
+            ILogger<ToDoController> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _toDoRepository = toDoRepository ?? throw new ArgumentException(nameof(toDoRepository));
@@ -34,96 +32,53 @@ namespace ToDo.API.Controllers
             _taskHandler = taskHandler ?? throw new ArgumentNullException(nameof(taskHandler));
             _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         }
-        
+
         [HttpGet]
         public IActionResult GetToDo()
         {
-            try
-            {
-                var toDoEntities = _toDoRepository.GetToDo();
-                return Ok(_mapper.Map<IEnumerable<ToDoDto>>(toDoEntities));
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError("Exception occured while getting checklist items", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
-
+            _logger.LogInformation("GET: api/todo");
+            var toDoEntities = _toDoRepository.GetToDo();
+            return Ok(_mapper.Map<IEnumerable<ToDoDto>>(toDoEntities));
         }
 
-        [HttpGet("{id}", Name="GetToDoItem")]
+        [HttpGet("{id}", Name = "GetToDoItem")]
         public IActionResult GetToDoItem(int id)
         {
-            try
-            {
-                var todo = _toDoRepository.GetToDoItem(id);
-                if (todo == null)
-                {
-                    _logger.LogInformation($"To do item {id} not found.");
-                    return NotFound();
-                }
-
-                return Ok(todo);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogCritical($"Exception occured with getting to do item {id}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
-
+            _logger.LogInformation($"GET: api/todo/{id}");
+            var todo = _toDoRepository.GetToDoItem(id);
+            return Ok(todo);
         }
 
         [HttpGet("active/{date}")]
         public IActionResult GetToDoItemsForActiveDate(string date)
         {
-            try
-            {
-                var toDoEntities = _toDoRepository.GetToDoByActiveDate(date);
-                return Ok(toDoEntities);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogCritical($"Exception occured with getting to do item for active date {date}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
-        }        
-        
+            _logger.LogInformation($"GET: api/todo/active/{date}");
+            var toDoEntities = _toDoRepository.GetToDoByActiveDate(date);
+            return Ok(toDoEntities);
+        }
+
         [HttpGet("today")]
         public IActionResult GetToDoItemsForToday()
         {
+            _logger.LogInformation($"GET: api/todo/today");
             var easternZone = TimeZoneInfo.FindSystemTimeZoneById("EST");
             var timestamp = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, easternZone).ToString("yyyyMMdd");
-            try
-            {
-                var toDoEntities = _toDoRepository.GetToDoByActiveDate(timestamp);
-                return Ok(toDoEntities);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogCritical($"Exception occured with getting to do item for timestamp {timestamp}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
+            var toDoEntities = _toDoRepository.GetToDoByActiveDate(timestamp);
+            return Ok(toDoEntities);
         }
 
         [HttpGet("incomplete")]
         public IActionResult GetIncompleteToDoItems()
         {
-            try
-            {
-                var toDoEntities = _toDoRepository.GetToDoByCompleted(false);
-                return Ok(toDoEntities);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogCritical($"Exception occured with getting incomplete to do items.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
+            _logger.LogInformation($"GET: api/todo/incomplete");
+            var toDoEntities = _toDoRepository.GetToDoByCompleted(false);
+            return Ok(toDoEntities);
         }
-        
+
         [HttpPost]
         public IActionResult CreateToDoItem(ToDoCreationDto createToDoItem)
         {
-
+            _logger.LogInformation($"POST: api/todo/ body={createToDoItem}");
             var todoItem = _mapper.Map<Entities.ToDo>(createToDoItem);
             todoItem.ActiveDate = DateTime.Now.ToString("yyyyMMdd");
             todoItem.CreatedDate = todoItem.ActiveDate;
@@ -137,238 +92,116 @@ namespace ToDo.API.Controllers
                     InProgress = true
                 });
             }
-
-            var checkListAudit = new CheckListAudit
-            {
-                AuditAction = AuditActions.ADD,
-                AuditDate = DateTime.Now,
-                ChecklistId = createdToDoItem.Id,
-                Id = 0,
-                NewValue = $"{createdToDoItem.Id}:{createdToDoItem.Description}",
-                OriginalValue = "",
-                Property = ""
-
-            };
-            _auditRepository.AddCheckListAudit(checkListAudit);
+            _auditRepository.AuditAdd(createdToDoItem.Id, createdToDoItem.Description);
             return CreatedAtRoute("GetToDoItem", new {id = createdToDoItem.Id}, createdToDoItem);
-
         }
 
         [HttpPost("quantity-adjustment")]
         public IActionResult AdjustToDoQuantity(ToDoUpdateQuantityDto updateQuantity)
         {
-            try
+            _logger.LogInformation($"POST: api/todo/quantity-adjustment body={updateQuantity}");
+            var todo = _toDoRepository.GetToDoItem(updateQuantity.Id);
+            if (todo == null)
             {
-                var todo = _toDoRepository.GetToDoItem(updateQuantity.Id);
-                if (todo == null)
-                {
-                    _logger.LogInformation($"To do item {updateQuantity.Id} not found.");
-                    return NotFound();
-                }
-
-                int newQuantity = todo.Quantity - updateQuantity.Adjustment;
-                if (newQuantity <= 0)
-                {
-                    newQuantity = 0;
-                    todo.Completed = true;
-                    _auditRepository.AddCheckListAudit(new CheckListAudit
-                    {
-                        AuditAction = AuditActions.UPDATE,
-                        AuditDate = DateTime.Now,
-                        ChecklistId = todo.Id,
-                        Id = 0,
-                        NewValue = "true",
-                        OriginalValue = "false",
-                        Property = "Completed"
-
-                    });                    
-                }
-
-                var oldQuantity = todo.Quantity;
-                todo.Quantity = newQuantity;
-                _toDoRepository.Save();
-                _auditRepository.AddCheckListAudit(new CheckListAudit
-                {
-                    AuditAction = AuditActions.UPDATE,
-                    AuditDate = DateTime.Now,
-                    ChecklistId = todo.Id,
-                    Id = 0,
-                    NewValue = $"{newQuantity}",
-                    OriginalValue = $"{oldQuantity}",
-                    Property = "Quantity"
-
-                });   
-                if (todo.TaskId > 0 && todo.Completed)
-                {
-                    _taskHandler.CompleteTask(new TaskCompletedDto
-                    {
-                        TaskId = todo.TaskId,
-                        Completed = todo.Completed
-                    });
-                }
-                return Ok(todo);
+                _logger.LogInformation($"To do item {updateQuantity.Id} not found.");
+                return NotFound();
             }
-            catch (Exception exception)
+
+            int newQuantity = todo.Quantity - updateQuantity.Adjustment;
+            if (newQuantity <= 0)
             {
-                _logger.LogCritical($"Exception occured completing item {updateQuantity.Id}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
+                newQuantity = 0;
+                todo.Completed = true;
+                _auditRepository.AuditUpdate(todo.Id, "Completed", "false", "true");
             }
+
+            var oldQuantity = todo.Quantity;
+            todo.Quantity = newQuantity;
+            _toDoRepository.Save();
+            _auditRepository.AuditUpdate(todo.Id, "Quantity", $"{oldQuantity}", $"{newQuantity}");
+            if (todo.TaskId > 0 && todo.Completed)
+            {
+                _taskHandler.CompleteTask(new TaskCompletedDto
+                {
+                    TaskId = todo.TaskId,
+                    Completed = todo.Completed
+                });
+            }
+
+            return Ok(todo);
         }
-        
+
         [HttpPut("{id}/completed")]
         public IActionResult CompleteToDoItem(int id, [FromBody] ToDoCompletedDto toDoCompleted)
         {
-            try
-            {
-                var todo = _toDoRepository.GetToDoItem(id);
-                if (todo == null)
-                {
-                    _logger.LogInformation($"To do item {id} not found.");
-                    return NotFound();
-                }
+            _logger.LogInformation($"PUT: api/todo/{id}/completed body={toDoCompleted}");
+            var todo = _toDoRepository.GetToDoItem(id);
 
-                var oldValue = todo.Completed;
-                todo.Completed = toDoCompleted.Completed;
-                todo.CompletionDate = DateTime.Now.ToString("yyyyMMdd");
-                _toDoRepository.Save();
-                _auditRepository.AddCheckListAudit(new CheckListAudit
-                {
-                    AuditAction = AuditActions.UPDATE,
-                    AuditDate = DateTime.Now,
-                    ChecklistId = todo.Id,
-                    Id = 0,
-                    NewValue = $"{toDoCompleted.Completed}",
-                    OriginalValue = $"{oldValue}",
-                    Property = "Completed"
-
-                });  
-                if (toDoCompleted.TaskId > 0)
-                {
-                    _taskHandler.CompleteTask(new TaskCompletedDto
-                    {
-                        TaskId = toDoCompleted.TaskId,
-                        Completed = toDoCompleted.Completed
-                    });
-                }
-                return NoContent();
-            }
-            catch (Exception exception)
+            var oldValue = todo.Completed;
+            todo.Completed = toDoCompleted.Completed;
+            todo.CompletionDate = DateTime.Now.ToString("yyyyMMdd");
+            _toDoRepository.Save();
+            _auditRepository.AuditUpdate(todo.Id, "Completed", $"{oldValue}", $"{toDoCompleted.Completed}");
+            if (toDoCompleted.TaskId > 0)
             {
-                _logger.LogCritical($"Exception occured completing item {id}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
+                _taskHandler.CompleteTask(new TaskCompletedDto
+                {
+                    TaskId = toDoCompleted.TaskId,
+                    Completed = toDoCompleted.Completed
+                });
             }
 
+            return NoContent();
         }
-        
+
         [HttpPut("{id}/active-date")]
         public IActionResult UpdateToDoTimestamp(int id, [FromBody] ToDoUpdateTimestampDto toDoTimestamp)
         {
-            try
-            {
-                var todo = _toDoRepository.GetToDoItem(id);
-                if (todo == null)
-                {
-                    _logger.LogInformation($"To do item {id} not found.");
-                    return NotFound();
-                }
+            _logger.LogInformation($"GET: api/todo/{id}/active-date body={toDoTimestamp}");
+            var todo = _toDoRepository.GetToDoItem(id);
 
-                var oldValue = todo.ActiveDate;
-                todo.ActiveDate = toDoTimestamp.ActiveDate;
-                _toDoRepository.Save();
-                _auditRepository.AddCheckListAudit(new CheckListAudit
-                {
-                    AuditAction = AuditActions.UPDATE,
-                    AuditDate = DateTime.Now,
-                    ChecklistId = todo.Id,
-                    Id = 0,
-                    NewValue = toDoTimestamp.ActiveDate,
-                    OriginalValue = oldValue,
-                    Property = "ActiveDate"
-
-                });  
-                return NoContent();
-            }
-            catch (Exception exception)
-            {
-                _logger.LogCritical($"Exception occured completing item {id}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
-
+            var oldValue = todo.ActiveDate;
+            todo.ActiveDate = toDoTimestamp.ActiveDate;
+            _toDoRepository.Save();
+            _auditRepository.AuditUpdate(todo.Id, "ActiveDate", oldValue, todo.ActiveDate);
+            return NoContent();
         }
 
         [HttpPost("{id}/snooze")]
         public IActionResult SnoozeToDo(int id, [FromBody] ToDoSnoozeDto toDoSnooze)
         {
-            try
-            {
-                var todo = _toDoRepository.GetToDoItem(id);
-                if (todo == null)
-                {
-                    _logger.LogInformation($"To do item {id} not found.");
-                    return NotFound();
-                }
+            _logger.LogInformation($"POST: api/todo/{id}/snooze body={toDoSnooze}");
+            var todo = _toDoRepository.GetToDoItem(id);
 
-                var timestamp = DateTime.ParseExact(todo.ActiveDate,
-                    "yyyyMMdd",
-                    new CultureInfo("en-US"));
+            var timestamp = DateTime.ParseExact(todo.ActiveDate,
+                "yyyyMMdd",
+                new CultureInfo("en-US"));
 
-                timestamp = timestamp.AddDays(toDoSnooze.Days);
-                var oldValue = todo.ActiveDate;
-                todo.ActiveDate = timestamp.ToString("yyyyMMdd");
-                _toDoRepository.Save();
-                _auditRepository.AddCheckListAudit(new CheckListAudit
-                {
-                    AuditAction = AuditActions.UPDATE,
-                    AuditDate = DateTime.Now,
-                    ChecklistId = todo.Id,
-                    Id = 0,
-                    NewValue = todo.ActiveDate,
-                    OriginalValue = oldValue,
-                    Property = "ActiveDate"
-
-                });  
-                return NoContent();
-            }
-            catch (Exception exception)
-            {
-                _logger.LogCritical($"Exception occured snoozing item {id}.", exception);
-                return StatusCode(500, "A problem occured while handling your request.");
-            }
+            timestamp = timestamp.AddDays(toDoSnooze.Days);
+            var oldValue = todo.ActiveDate;
+            todo.ActiveDate = timestamp.ToString("yyyyMMdd");
+            _toDoRepository.Save();
+            _auditRepository.AuditUpdate(todo.Id, "ActiveDate", oldValue, todo.ActiveDate);
+            return NoContent();
         }
 
         [HttpDelete("{id}")]
         public IActionResult DeleteToDoItem(int id)
         {
+            _logger.LogInformation($"DELETE: api/todo/{id}");
             var todo = _toDoRepository.GetToDoItem(id);
-            if (todo == null)
-            {
-                _logger.LogInformation($"To do item {id} not found.");
-                return NotFound();
-            }
 
             _toDoRepository.DeleteToDoItem(todo);
             _toDoRepository.Save();
-            _auditRepository.AddCheckListAudit(new CheckListAudit
-            {
-                AuditAction = AuditActions.DELETE,
-                AuditDate = DateTime.Now,
-                ChecklistId = todo.Id,
-                Id = 0,
-                NewValue = "",
-                OriginalValue = $"{todo.Id}:{todo.Description}",
-                Property = "ActiveDate"
-
-            });  
+            _auditRepository.AuditDelete(todo.Id, todo.Description);
             {
                 _taskHandler.InProgressTask(new TaskInProgressDto
                 {
                     TaskId = todo.TaskId,
                     InProgress = false
                 });
-            }            
+            }
             return NoContent();
         }
     }
-    
-    
 }

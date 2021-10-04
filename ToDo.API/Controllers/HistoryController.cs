@@ -30,6 +30,7 @@ namespace ToDo.API.Controllers
         public IActionResult GetCompletionHistory([FromQuery(Name="start")] DateTime start,
                                                   [FromQuery(Name="end")] DateTime end)
         {
+            _logger.LogInformation($"GET: api/todo/history/completed/summary?start='{start}'&end='{end}'");
             var completedEntities = _auditRepository.GetAuditByDateRangeAndProperty(
                     start.Subtract(TimeSpan.FromDays(1)), 
                     end.Add(TimeSpan.FromDays(1)),

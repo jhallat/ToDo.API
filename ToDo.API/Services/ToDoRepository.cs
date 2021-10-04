@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.Extensions.Logging;
 using ToDo.API.Context;
 
 namespace ToDo.API.Services
@@ -8,10 +9,12 @@ namespace ToDo.API.Services
     public class ToDoRepository : IToDoRepository
     {
         private readonly ToDoContext _context;
+        private readonly ILogger<ToDoRepository> _logger;
 
-        public ToDoRepository(ToDoContext context)
+        public ToDoRepository(ToDoContext context, ILogger<ToDoRepository> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
         
         public IEnumerable<Entities.ToDo> GetToDo()
@@ -38,7 +41,13 @@ namespace ToDo.API.Services
         
         public Entities.ToDo GetToDoItem(int id)
         {
-            return _context.ToDo.FirstOrDefault(t => t.Id == id);
+            var result = _context.ToDo.FirstOrDefault(t => t.Id == id);
+            if (result == null)
+            {
+                throw new KeyNotFoundException($"Checklist item with {id} not found");
+            }
+
+            return result;
         }
 
         public Entities.ToDo AddToDoItem(Entities.ToDo toDo)

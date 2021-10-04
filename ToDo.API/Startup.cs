@@ -13,7 +13,9 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using NLog.Fluent;
 using ToDo.API.Context;
+using ToDo.API.Middleware;
 using ToDo.API.Services;
 
 
@@ -61,11 +63,7 @@ namespace ToDo.API
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-                var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION");
-                if (connectionString == null || connectionString.Trim().Length == 0)
-                {
-                    connectionString = _configuration["connectionStrings:todoConnectionString"];
-                }
+               var connectionString = _configuration["connectionStrings:todoConnectionString"];
 
                 services.AddCors(options =>
                 {
@@ -96,7 +94,6 @@ namespace ToDo.API
                 {
                     password = _configuration["QueueConnection:password"];
                 }
-
                 services.AddControllers();
                 services.AddDbContext<ToDoContext>(options => options.UseNpgsql(connectionString));
                 services.AddScoped<IToDoRepository, ToDoRepository>();
@@ -115,14 +112,15 @@ namespace ToDo.API
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            app.UseMiddleware<ChecklistExceptionHandlingMiddleware>();
+            /* if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
             else
             {
                 app.UseExceptionHandler("/Error");
-            }
+            }*/
 
             app.UseStatusCodePages();
             app.UseRouting();

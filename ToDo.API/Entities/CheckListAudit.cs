@@ -19,10 +19,10 @@ namespace ToDo.API.Entities
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Column("id")]
-        public int Id { get; set; }
+        public long Id { get; set; }
         [Required]
         [Column("checklist_id")]
-        public int ChecklistId { get; set; }
+        public long ChecklistId { get; set; }
         [Required]
         [MaxLength(8)]
         [Column("audit_date")]
